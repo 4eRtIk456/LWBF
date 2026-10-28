@@ -1,0 +1,25 @@
+#Builds
+*.apk
+*.aab
+*.unitypackage
+*.unitypackage.meta
+*.app
+
+#Crashlytics
+crashlytics-build.properties
+
+#Packed Addressables
+/[Aa]ssets/[Aa]ddressables[Aa]ssets[Dd]ata/*/*.bin*
+
+#Temporary auto-generated Android Assets
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]serSettings/
+.vs/
