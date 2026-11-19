@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
-    [SerializeField] private GameObject optionsPanel;
-    [SerializeField] private GameObject creditsPanel;
+    [SerializeField] private GameObject _optionsPanel;
+    [SerializeField] private GameObject _creditsPanel;
 
     public void StartGame()
     {
@@ -14,20 +14,20 @@ public class MainMenu : MonoBehaviour
 
     public void OpenOptions()
     {
-        optionsPanel.SetActive(true);
-        creditsPanel.SetActive(false);
+        _optionsPanel.SetActive(true);
+        _creditsPanel.SetActive(false);
     }
 
     public void OpenCredits()
     {
-        creditsPanel.SetActive(true);
-        optionsPanel.SetActive(false);
+        _creditsPanel.SetActive(true);
+        _optionsPanel.SetActive(false);
     }
 
     public void ClosePanels()
     {
-        optionsPanel.SetActive(false);
-        creditsPanel.SetActive(false);
+        _optionsPanel.SetActive(false);
+        _creditsPanel.SetActive(false);
     }
 
     public void ExitGame()
