@@ -23,3 +23,8 @@ crashlytics-build.properties
 [Ll]ogs/
 [Uu]serSettings/
 .vs/
+
+# Auto-generated Unity/C# project files
+*.csproj
+*.sln
+*.slnx
