@@ -9,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 public class PhoebeMovement : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 3f;
+    [SerializeField] private float moveSpeed = 6f;
 
     [Header("Lantern")]
     [SerializeField] private AnimationClip takeOutClip;
