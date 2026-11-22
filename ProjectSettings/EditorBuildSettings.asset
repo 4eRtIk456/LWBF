@@ -5,12 +5,15 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
     path: Assets/Scenes/Menu.unity
     guid: 5d823f0d6b1aa234d8b52e6942f9505f
+  - enabled: 1
+    path: Assets/Scenes/PhoebeHouseInterior.unity
+    guid: ae92ef69d91994757abaa58246d07fe2
   - enabled: 1
     path: Assets/Scenes/OutsideScene.unity
     guid: 29bb38dedcf98420188a53a0f219c04d
