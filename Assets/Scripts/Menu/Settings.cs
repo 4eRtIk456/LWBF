@@ -20,8 +20,10 @@ public class Settings : MonoBehaviour
     private List<Vector2Int> resolutions = new List<Vector2Int>();
     private bool isFullscreen;
 
-    private Color selectedColor = new Color(0.88f, 0.65f, 0.42f);
+    private Color selectedColor = new Color(0.965f, 0.780f, 0.541f);
     private Color normalColor = new Color(0.184f, 0.078f, 0.078f, 1f);
+    private Color selectedTextColor = new Color32(50, 23, 22, 255); 
+    private Color normalTextColor = new Color32(246, 199, 138, 255); 
 
     private void Start()
     {
@@ -169,14 +171,25 @@ public class Settings : MonoBehaviour
         Screen.SetResolution(selected.x, selected.y, mode);
     }
 
+    
     private void UpdateFullscreenButtons()
     {
+        // Change button backgrounds
         fullscreenOnButton.image.color =
             isFullscreen ? selectedColor : normalColor;
 
         fullscreenOffButton.image.color =
             isFullscreen ? normalColor : selectedColor;
+
+        // Get TextMeshPro components
+        TMP_Text onText = fullscreenOnButton.GetComponentInChildren<TMP_Text>();
+        TMP_Text offText = fullscreenOffButton.GetComponentInChildren<TMP_Text>();
+
+        // Change text colors
+        onText.color = isFullscreen ? selectedTextColor : normalTextColor;
+        offText.color = isFullscreen ? normalTextColor : selectedTextColor;
     }
+
 
     private void OnDisable()
     {
