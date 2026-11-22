@@ -9,7 +9,7 @@ public class MainMenu : MonoBehaviour
 
     public void StartGame()
     {
-        SceneManager.LoadScene("PhoebeMovementTest");
+        SceneManager.LoadScene("PhoebeHouseInterior");
     }
 
     public void OpenOptions()
