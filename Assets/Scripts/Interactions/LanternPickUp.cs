@@ -10,6 +10,14 @@ public class LanternPickup : MonoBehaviour
     public static bool HasLantern { get; private set; }
 
     private PlayerInput _playerInput;
+    private InputAction _interactAction;
+
+    [RuntimeInitializeOnLoadMethod(
+        RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetLanternState()
+    {
+        HasLantern = false;
+    }
 
     private void Start()
     {
@@ -22,43 +30,40 @@ public class LanternPickup : MonoBehaviour
 
     private void Update()
     {
-        if (_playerInput == null || HasLantern)
+        if (HasLantern || _playerInput == null)
             return;
 
-        InputAction interactAction =
-            _playerInput.actions.FindAction("Interact");
+        if (DialogueManager.Instance == null)
+            return;
 
-        if (interactAction != null && interactAction.WasPressedThisFrame())
-            PickUpLantern();
+        if (DialogueManager.Instance.IsOpen)
+        {
+            SetPromptVisible(false);
+            return;
+        }
+
+        SetPromptVisible(true);
+
+        if (_interactAction != null &&
+            _interactAction.WasPressedThisFrame())
+        {
+            AskToPickUp();
+        }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void AskToPickUp()
     {
-        if (HasLantern)
+        if (DialogueManager.Instance == null ||
+            DialogueManager.Instance.IsOpen)
             return;
 
-        PlayerInput player = other.GetComponentInParent<PlayerInput>();
+        SetPromptVisible(false);
 
-        if (player == null)
-            return;
-
-        _playerInput = player;
-
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(true);
-    }
-
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        PlayerInput player = other.GetComponentInParent<PlayerInput>();
-
-        if (player == null || player != _playerInput)
-            return;
-
-        _playerInput = null;
-
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(false);
+        DialogueManager.Instance.ShowChoice(
+            "Phoebe",
+            "Pick up the lantern?",
+            PickUpLantern
+        );
     }
 
     private void PickUpLantern()
@@ -67,16 +72,62 @@ public class LanternPickup : MonoBehaviour
 
         Debug.Log("Phoebe picked up the lantern!");
 
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(false);
-
+        SetPromptVisible(false);
         gameObject.SetActive(false);
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetLanternState()
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        HasLantern = false;
-}
-}
+        CheckPlayer(other);
+    }
 
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        CheckPlayer(other);
+    }
+
+    private void CheckPlayer(Collider2D other)
+    {
+        if (HasLantern)
+            return;
+
+        PlayerInput player =
+            other.GetComponentInParent<PlayerInput>();
+
+        if (player == null)
+            return;
+
+        _playerInput = player;
+        _interactAction =
+            player.actions.FindAction("Interact");
+
+        if (DialogueManager.Instance != null &&
+            !DialogueManager.Instance.IsOpen)
+        {
+            SetPromptVisible(true);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        PlayerInput player =
+            other.GetComponentInParent<PlayerInput>();
+
+        if (player == null || player != _playerInput)
+            return;
+
+        _playerInput = null;
+        _interactAction = null;
+
+        SetPromptVisible(false);
+    }
+
+    private void SetPromptVisible(bool visible)
+    {
+        if (_interactionPrompt != null &&
+            _interactionPrompt.activeSelf != visible)
+        {
+            _interactionPrompt.SetActive(visible);
+        }
+    }
+}

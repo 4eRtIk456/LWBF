@@ -2,13 +2,21 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class HouseDoor : MonoBehaviour
 {
+    [Header("Door Animation")]
     [SerializeField] private Animator doorAnimator;
     [SerializeField] private AnimationClip openingClip;
     [SerializeField] private AnimationClip closingClip;
+
+    [Header("Interaction")]
     [SerializeField] private GameObject interactionPrompt;
+
+    [Header("Scene Transition")]
+    [SerializeField] private string _destinationScene =
+        "PhoebeHouseInterior";
 
     private PlayerInput nearbyPlayer;
     private InputAction interactAction;
@@ -23,6 +31,8 @@ public class HouseDoor : MonoBehaviour
 
         if (doorAnimator != null)
             doorAnimator.Play("Door_Closed");
+
+        isOpen = false;
     }
 
     private void Update()
@@ -33,64 +43,114 @@ public class HouseDoor : MonoBehaviour
         if (isAnimating)
             return;
 
+        if (DialogueManager.Instance == null)
+        {
+            if (interactionPrompt != null)
+                interactionPrompt.SetActive(false);
+
+            return;
+        }
+
+        if (DialogueManager.Instance.IsOpen)
+        {
+            if (interactionPrompt != null)
+                interactionPrompt.SetActive(false);
+
+            return;
+        }
+
+        if (interactionPrompt != null)
+            interactionPrompt.SetActive(true);
+
         if (interactAction.WasPressedThisFrame())
-            StartCoroutine(ToggleDoor());
+            AskToEnter();
     }
 
-    private IEnumerator ToggleDoor()
+    private void AskToEnter()
     {
-        if (doorAnimator == null)
-            yield break;
+        if (DialogueManager.Instance == null)
+        {
+            Debug.LogWarning(
+                "HouseDoor: DialogueManager not found!",
+                this
+            );
+            return;
+        }
 
+        if (DialogueManager.Instance.IsOpen)
+            return;
+
+        if (interactionPrompt != null)
+            interactionPrompt.SetActive(false);
+
+        DialogueManager.Instance.ShowChoice(
+            "Phoebe",
+            "Enter the house?",
+            EnterHouse
+        );
+    }
+
+    private void EnterHouse()
+    {
+        if (isAnimating)
+            return;
+
+        StartCoroutine(OpenDoorAndEnter());
+    }
+
+    private IEnumerator OpenDoorAndEnter()
+    {
         isAnimating = true;
 
         if (interactionPrompt != null)
             interactionPrompt.SetActive(false);
 
-        if (!isOpen)
+        if (doorAnimator != null)
         {
             doorAnimator.Play("Door_Opening", 0, 0f);
 
             if (openingClip != null)
-                yield return new WaitForSeconds(openingClip.length);
+                yield return new WaitForSeconds(
+                    openingClip.length
+                );
 
             isOpen = true;
+
             doorAnimator.Play("Door_Opened", 0, 0f);
         }
-        else
-        {
-            doorAnimator.Play("Door_Closing", 0, 0f);
 
-            if (closingClip != null)
-                yield return new WaitForSeconds(closingClip.length);
+        // Tell the interior scene where Phoebe came from.
+        SceneEntryState.SetEnteringHouse();
 
-            isOpen = false;
-            doorAnimator.Play("Door_Closed", 0, 0f);
-        }
-
-        isAnimating = false;
-
-        if (nearbyPlayer != null && interactionPrompt != null)
-            interactionPrompt.SetActive(true);
+        // Load Phoebe's house interior.
+        SceneManager.LoadScene(_destinationScene);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        PlayerInput player = other.GetComponentInParent<PlayerInput>();
+        PlayerInput player =
+            other.GetComponentInParent<PlayerInput>();
 
         if (player == null)
             return;
 
         nearbyPlayer = player;
-        interactAction = player.actions.FindAction("Interact");
+        interactAction =
+            player.actions.FindAction("Interact");
 
-        if (interactionPrompt != null && !isAnimating)
+        if (interactionPrompt != null &&
+            !isAnimating &&
+            DialogueManager.Instance != null &&
+            !DialogueManager.Instance.IsOpen)
+        {
             interactionPrompt.SetActive(true);
+        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        PlayerInput player = other.GetComponentInParent<PlayerInput>();
+        PlayerInput player =
+            other.GetComponentInParent<PlayerInput>();
 
         if (player == null || player != nearbyPlayer)
             return;
@@ -102,4 +162,3 @@ public class HouseDoor : MonoBehaviour
             interactionPrompt.SetActive(false);
     }
 }
-

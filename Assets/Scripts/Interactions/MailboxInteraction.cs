@@ -2,7 +2,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using TMPro;
 
 public class MailboxInteraction : MonoBehaviour
 {
@@ -15,24 +14,21 @@ public class MailboxInteraction : MonoBehaviour
     [SerializeField] private GameObject interactionPrompt;
 
     [Header("Dialogue")]
-    [SerializeField] private GameObject dialoguePanel;
-    [SerializeField] private TMP_Text dialogueText;
-    [SerializeField] private float dialogueDuration = 3f;
+    [SerializeField] private string _letterMessage =
+        "I guess this is a new order. Nice.";
 
-    private PlayerInput nearbyPlayer;
-    private InputAction interactAction;
+    [SerializeField] private string _emptyMessage = "Empty.";
 
-    private bool hasLetter = true;
-    private bool isAnimating = false;
-    private Coroutine dialogueCoroutine;
+    private PlayerInput _nearbyPlayer;
+    private InputAction _interactAction;
+
+    private bool _hasLetter = true;
+    private bool _isBusy;
 
     private void Start()
     {
         if (interactionPrompt != null)
             interactionPrompt.SetActive(false);
-
-        if (dialoguePanel != null)
-            dialoguePanel.SetActive(false);
 
         if (mailboxAnimator != null)
             mailboxAnimator.Play("Mailbox_Message", 0, 0f);
@@ -40,112 +36,141 @@ public class MailboxInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (nearbyPlayer == null || interactAction == null)
+        if (_nearbyPlayer == null || _interactAction == null)
             return;
 
-        if (isAnimating || dialogueCoroutine != null)
+        if (_isBusy)
             return;
 
-        if (interactAction.WasPressedThisFrame())
+        if (DialogueManager.Instance == null)
+            return;
+
+        if (DialogueManager.Instance.IsOpen)
         {
-            if (hasLetter)
-                StartCoroutine(CollectLetter());
-            else
-                ShowDialogue("Empty.");
+            SetPromptVisible(false);
+            return;
         }
+
+        SetPromptVisible(true);
+
+        if (!_interactAction.WasPressedThisFrame())
+            return;
+
+        if (_hasLetter)
+            StartCoroutine(CollectLetter());
+        else
+            StartCoroutine(ReadEmptyMailbox());
     }
 
     private IEnumerator CollectLetter()
     {
-        if (mailboxAnimator == null)
+        _isBusy = true;
+        SetPromptVisible(false);
+
+        if (mailboxAnimator != null)
+        {
+            mailboxAnimator.Play("Mailbox_Opening", 0, 0f);
+
+            if (openingClip != null)
+                yield return new WaitForSeconds(openingClip.length);
+        }
+
+        _hasLetter = false;
+
+        yield return ShowMailboxDialogue(_letterMessage);
+
+        if (mailboxAnimator != null)
+        {
+            mailboxAnimator.Play("Mailbox_Closing", 0, 0f);
+
+            if (closingClip != null)
+                yield return new WaitForSeconds(closingClip.length);
+
+            mailboxAnimator.Play("Mailbox_Closed", 0, 0f);
+        }
+
+        _isBusy = false;
+        RefreshPrompt();
+    }
+
+    private IEnumerator ReadEmptyMailbox()
+    {
+        _isBusy = true;
+        SetPromptVisible(false);
+
+        yield return ShowMailboxDialogue(_emptyMessage);
+
+        _isBusy = false;
+        RefreshPrompt();
+    }
+
+    private IEnumerator ShowMailboxDialogue(string message)
+    {
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null)
+        {
+            Debug.LogWarning(
+                "MailboxInteraction: DialogueManager not found!",
+                this
+            );
             yield break;
+        }
 
-        isAnimating = true;
+        dialogue.ShowDialogue("Phoebe", message);
 
-        if (interactionPrompt != null)
-            interactionPrompt.SetActive(false);
-
-        mailboxAnimator.Play("Mailbox_Opening", 0, 0f);
-
-        if (openingClip != null)
-            yield return new WaitForSeconds(openingClip.length);
-
-        hasLetter = false;
-
-        ShowDialogue("I guess this is a new order. Nice.");
-
-        if (dialogueCoroutine != null)
-            yield return dialogueCoroutine;
-
-        mailboxAnimator.Play("Mailbox_Closing", 0, 0f);
-
-        if (closingClip != null)
-            yield return new WaitForSeconds(closingClip.length);
-
-        mailboxAnimator.Play("Mailbox_Closed", 0, 0f);
-
-        isAnimating = false;
-
-        if (nearbyPlayer != null && interactionPrompt != null)
-            interactionPrompt.SetActive(true);
-    }
-
-    private void ShowDialogue(string message)
-    {
-        if (dialoguePanel == null || dialogueText == null)
-            return;
-
-        if (dialogueCoroutine != null)
-            StopCoroutine(dialogueCoroutine);
-
-        dialogueCoroutine = StartCoroutine(DisplayDialogue(message));
-    }
-
-    private IEnumerator DisplayDialogue(string message)
-    {
-
-        dialogueText.text = message;
-        dialoguePanel.SetActive(true);
-
-        if (interactionPrompt != null)
-            interactionPrompt.SetActive(false);
-
-        yield return new WaitForSeconds(dialogueDuration);
-
-        dialoguePanel.SetActive(false);
-        dialogueCoroutine = null;
-
-        if (nearbyPlayer != null && !isAnimating &&
-            interactionPrompt != null)
-            interactionPrompt.SetActive(true);
+        yield return new WaitUntil(
+            () => dialogue == null || !dialogue.IsOpen
+        );
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        PlayerInput player = other.GetComponentInParent<PlayerInput>();
+        PlayerInput player =
+            other.GetComponentInParent<PlayerInput>();
 
         if (player == null)
             return;
 
-        nearbyPlayer = player;
-        interactAction = player.actions.FindAction("Interact");
+        _nearbyPlayer = player;
+        _interactAction = player.actions.FindAction("Interact");
 
-        if (interactionPrompt != null && !isAnimating &&
-            dialogueCoroutine == null)
-            interactionPrompt.SetActive(true);
+        RefreshPrompt();
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        PlayerInput player = other.GetComponentInParent<PlayerInput>();
+        PlayerInput player =
+            other.GetComponentInParent<PlayerInput>();
 
-        if (player == null || player != nearbyPlayer)
+        if (player == null || player != _nearbyPlayer)
             return;
 
-        nearbyPlayer = null;
-        interactAction = null;
+        _nearbyPlayer = null;
+        _interactAction = null;
 
-        if (interactionPrompt != null)
-            interactionPrompt.SetActive(false);
+        SetPromptVisible(false);
+    }
+
+    private void RefreshPrompt()
+    {
+        bool dialogueOpen =
+            DialogueManager.Instance != null &&
+            DialogueManager.Instance.IsOpen;
+
+        SetPromptVisible(
+            _nearbyPlayer != null &&
+            !_isBusy &&
+            !dialogueOpen
+        );
+    }
+
+    private void SetPromptVisible(bool visible)
+    {
+        if (interactionPrompt != null &&
+            interactionPrompt.activeSelf != visible)
+        {
+            interactionPrompt.SetActive(visible);
+        }
     }
 }

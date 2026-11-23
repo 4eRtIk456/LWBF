@@ -15,6 +15,7 @@ public class BedWakeUp : MonoBehaviour
     [Header("Player")]
     [SerializeField] private GameObject _player;
     [SerializeField] private Transform _wakePoint;
+    [SerializeField] private Transform _entranceSpawnPoint;
 
     [Header("Camera")]
     [SerializeField] private NewCameraFollow _cameraFollow;
@@ -35,6 +36,7 @@ public class BedWakeUp : MonoBehaviour
 
     private bool _isSleeping;
     private bool _playerNearby;
+    private bool _returnedFromOutside;
 
     private void Awake()
     {
@@ -45,15 +47,26 @@ public class BedWakeUp : MonoBehaviour
             _eyesOpenSprite == null ||
             _wakePoint == null)
         {
-            Debug.LogError("BedWakeUp: Missing references!", this);
+            Debug.LogError(
+                "BedWakeUp: Missing references!",
+                this
+            );
+
             enabled = false;
             return;
         }
 
-        _movement = _player.GetComponent<PhoebeMovement>();
-        _playerInput = _player.GetComponent<PlayerInput>();
-        _playerRenderer = _player.GetComponent<SpriteRenderer>();
-        _playerRigidbody = _player.GetComponent<Rigidbody2D>();
+        _movement =
+            _player.GetComponent<PhoebeMovement>();
+
+        _playerInput =
+            _player.GetComponent<PlayerInput>();
+
+        _playerRenderer =
+            _player.GetComponent<SpriteRenderer>();
+
+        _playerRigidbody =
+            _player.GetComponent<Rigidbody2D>();
 
         if (_playerInput != null)
         {
@@ -61,15 +74,21 @@ public class BedWakeUp : MonoBehaviour
                 _playerInput.actions.FindAction("Interact");
         }
 
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(false);
+        SetPromptVisible(false);
 
-        BeginSleeping();
+        _returnedFromOutside =
+            SceneEntryState.ConsumeEnteringHouse();
+
+        if (_returnedFromOutside)
+            EnterFromOutside();
+        else
+            BeginSleeping();
     }
 
     private void Start()
     {
-        StartCoroutine(SleepSequence());
+        if (!_returnedFromOutside)
+            StartCoroutine(SleepSequence());
     }
 
     private void Update()
@@ -77,11 +96,45 @@ public class BedWakeUp : MonoBehaviour
         if (_isSleeping || !_playerNearby)
             return;
 
+        if (DialogueManager.Instance == null)
+            return;
+
+        if (DialogueManager.Instance.IsOpen)
+        {
+            SetPromptVisible(false);
+            return;
+        }
+
+        SetPromptVisible(true);
+
         if (_interactAction != null &&
             _interactAction.WasPressedThisFrame())
         {
-            StartCoroutine(SleepSequence());
+            AskToSleep();
         }
+    }
+
+    private void AskToSleep()
+    {
+        if (DialogueManager.Instance == null ||
+            DialogueManager.Instance.IsOpen)
+            return;
+
+        SetPromptVisible(false);
+
+        DialogueManager.Instance.ShowChoice(
+            "Phoebe",
+            "Go back to sleep?",
+            StartSleeping
+        );
+    }
+
+    private void StartSleeping()
+    {
+        if (_isSleeping)
+            return;
+
+        StartCoroutine(SleepSequence());
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -107,8 +160,11 @@ public class BedWakeUp : MonoBehaviour
 
         _playerNearby = true;
 
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(true);
+        if (DialogueManager.Instance != null &&
+            !DialogueManager.Instance.IsOpen)
+        {
+            SetPromptVisible(true);
+        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -120,9 +176,50 @@ public class BedWakeUp : MonoBehaviour
             return;
 
         _playerNearby = false;
+        SetPromptVisible(false);
+    }
 
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(false);
+    private void EnterFromOutside()
+    {
+        _isSleeping = false;
+        _playerNearby = false;
+
+        _sleepingPhoebe.SetActive(false);
+
+        if (_zzz != null)
+            _zzz.SetActive(false);
+
+        if (_entranceSpawnPoint == null)
+        {
+            Debug.LogError(
+                "BedWakeUp: Entrance Spawn Point is missing!",
+                this
+            );
+            return;
+        }
+
+        _player.transform.position =
+            _entranceSpawnPoint.position;
+
+        Physics2D.SyncTransforms();
+
+        if (_playerRigidbody != null)
+        {
+            _playerRigidbody.linearVelocity = Vector2.zero;
+            _playerRigidbody.simulated = true;
+        }
+
+        if (_playerRenderer != null)
+            _playerRenderer.enabled = true;
+
+        if (_movement != null)
+            _movement.enabled = true;
+
+        if (_playerInput != null)
+            _playerInput.ActivateInput();
+
+        if (_cameraFollow != null)
+            _cameraFollow.SetTarget(_player.transform);
     }
 
     private void BeginSleeping()
@@ -130,8 +227,7 @@ public class BedWakeUp : MonoBehaviour
         _isSleeping = true;
         _playerNearby = false;
 
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(false);
+        SetPromptVisible(false);
 
         if (_movement != null)
             _movement.enabled = false;
@@ -157,7 +253,9 @@ public class BedWakeUp : MonoBehaviour
         if (_cameraFollow != null &&
             _sleepingCameraPoint != null)
         {
-            _cameraFollow.SetTarget(_sleepingCameraPoint);
+            _cameraFollow.SetTarget(
+                _sleepingCameraPoint
+            );
         }
     }
 
@@ -165,19 +263,23 @@ public class BedWakeUp : MonoBehaviour
     {
         BeginSleeping();
 
-        // Phoebe sleeps.
+        // Sleeping animation.
         yield return new WaitForSeconds(_sleepDuration);
 
-        // Zzz disappears and Phoebe opens her eyes.
+        // Phoebe opens her eyes.
         if (_zzz != null)
             _zzz.SetActive(false);
 
         _sleepingRenderer.sprite = _eyesOpenSprite;
 
-        yield return new WaitForSeconds(_eyesOpenDuration);
+        yield return new WaitForSeconds(
+            _eyesOpenDuration
+        );
 
-        // Phoebe gets out of bed.
-        _player.transform.position = _wakePoint.position;
+        // Move Phoebe beside the bed.
+        _player.transform.position =
+            _wakePoint.position;
+
         Physics2D.SyncTransforms();
 
         _sleepingPhoebe.SetActive(false);
@@ -201,5 +303,14 @@ public class BedWakeUp : MonoBehaviour
             _cameraFollow.SetTarget(_player.transform);
 
         _isSleeping = false;
+    }
+
+    private void SetPromptVisible(bool visible)
+    {
+        if (_interactionPrompt != null &&
+            _interactionPrompt.activeSelf != visible)
+        {
+            _interactionPrompt.SetActive(visible);
+        }
     }
 }
