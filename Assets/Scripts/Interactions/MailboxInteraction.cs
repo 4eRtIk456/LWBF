@@ -12,6 +12,9 @@ public class MailboxInteraction : MonoBehaviour
     [Header("Interaction")]
     [SerializeField] private GameObject interactionPrompt;
 
+    [Header("Letter UI")]
+    [SerializeField] private LetterSequenceUI _letterUI;
+
     [Header("Dialogue")]
     [TextArea(2, 4)]
     [SerializeField] private string _letterMessage =
@@ -32,8 +35,6 @@ public class MailboxInteraction : MonoBehaviour
         if (mailboxAnimator == null)
             return;
 
-        // Show the letter animation only
-        // if the letter has not been read.
         if (GameState.HasReadLetter)
         {
             mailboxAnimator.Play("Mailbox_Closed", 0, 0f);
@@ -55,10 +56,7 @@ public class MailboxInteraction : MonoBehaviour
 
         DialogueManager dialogue = DialogueManager.Instance;
 
-        if (dialogue == null)
-            return;
-
-        if (dialogue.IsOpen)
+        if (dialogue != null && dialogue.IsOpen)
         {
             SetPromptVisible(false);
             return;
@@ -99,10 +97,52 @@ public class MailboxInteraction : MonoBehaviour
             }
         }
 
-        // Show the letter using DialogueManager.
+        // Phoebe speaks before the letter appears.
         yield return ShowMailboxDialogue(_letterMessage);
 
-        // Remember that Phoebe read the letter.
+        // Open the illustrated letter after Continue.
+        if (_letterUI != null)
+        {
+            PhoebeMovement movement = null;
+
+            if (_nearbyPlayer != null)
+            {
+                movement =
+                    _nearbyPlayer.GetComponentInParent<PhoebeMovement>();
+            }
+
+            bool wasMovementEnabled =
+                movement != null && movement.enabled;
+
+            if (movement != null)
+            {
+                movement.enabled = false;
+            }
+
+            bool letterClosed = false;
+
+            _letterUI.OpenLetter(
+                () => letterClosed = true
+            );
+
+            yield return new WaitUntil(
+                () => letterClosed
+            );
+
+            if (movement != null)
+            {
+                movement.enabled = wasMovementEnabled;
+            }
+        }
+        else
+        {
+            Debug.LogWarning(
+                "MailboxInteraction: Letter UI is not assigned!",
+                this
+            );
+        }
+
+        // Remember that the letter was read.
         GameState.ReadLetter();
 
         // Close the mailbox.
