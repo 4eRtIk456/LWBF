@@ -4030,6 +4030,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 376426762021246530, guid: 0a3987ba7ca4640fa9582480dbb13d5f, type: 3}
   m_PrefabInstance: {fileID: 571202801}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &742239075 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1498851399125801847, guid: 7c6e0a0f48a7daa4bab233364c06ae09, type: 3}
+  m_PrefabInstance: {fileID: 1080219149}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &744013562 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 376426762021246530, guid: 0a3987ba7ca4640fa9582480dbb13d5f, type: 3}
@@ -95883,17 +95888,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 376426762021246530, guid: 0a3987ba7ca4640fa9582480dbb13d5f, type: 3}
   m_PrefabInstance: {fileID: 1631434186}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1672631413 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4101406401479903850, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-  m_PrefabInstance: {fileID: 5499673073833716558}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.2D.Runtime::UnityEngine.Rendering.Universal.Light2D
 --- !u!114 &1675458844 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7319873022396330398, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
@@ -101187,7 +101181,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9db034a4e8c4c412484ae486401e0cc1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LeafInteraction
-  _interactionPrompt: {fileID: 1087463748}
+  _interactionPrompt: {fileID: 742239075}
+  _leafObject: {fileID: 1930132004}
   _speakerName: Phoebe
   _message: A Lunar Leaf! That was quite easy.
 --- !u!1001 &1785137656
@@ -102550,26 +102545,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1074985720868595352, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_FlipX
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1074985720868595352, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_FlipY
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1074985720868595352, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_SortingLayer
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 1074985720868595352, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_SortingOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1074985720868595352, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_SortingLayerID
-      value: -1862049797
-      objectReference: {fileID: 0}
     - target: {fileID: 2676077851239608465, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -102614,38 +102589,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Phoebe
       objectReference: {fileID: 0}
-    - target: {fileID: 6815971257389634898, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_Size.x
-      value: 1.2210828
-      objectReference: {fileID: 0}
-    - target: {fileID: 6815971257389634898, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_Size.y
-      value: 1.3132725
-      objectReference: {fileID: 0}
-    - target: {fileID: 6815971257389634898, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_Offset.x
-      value: 0.022743404
-      objectReference: {fileID: 0}
-    - target: {fileID: 6815971257389634898, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: m_Offset.y
-      value: -1.6598916
-      objectReference: {fileID: 0}
-    - target: {fileID: 7319873022396330398, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: moveSpeed
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 7319873022396330398, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: takeInClip
-      value: 
-      objectReference: {fileID: 7400000, guid: b0f6dfd4a57cb47d8852deb09bab481b, type: 2}
-    - target: {fileID: 7319873022396330398, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: takeOutClip
-      value: 
-      objectReference: {fileID: 7400000, guid: 75f38d4cd991d429da2d8ca0eb5aa5e5, type: 2}
-    - target: {fileID: 7319873022396330398, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
-      propertyPath: lanternLight
-      value: 
-      objectReference: {fileID: 1672631413}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

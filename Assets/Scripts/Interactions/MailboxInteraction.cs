@@ -1,4 +1,3 @@
-
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,38 +13,52 @@ public class MailboxInteraction : MonoBehaviour
     [SerializeField] private GameObject interactionPrompt;
 
     [Header("Dialogue")]
+    [TextArea(2, 4)]
     [SerializeField] private string _letterMessage =
         "I guess this is a new order. Nice.";
 
+    [TextArea(2, 4)]
     [SerializeField] private string _emptyMessage = "Empty.";
 
     private PlayerInput _nearbyPlayer;
     private InputAction _interactAction;
 
-    private bool _hasLetter = true;
     private bool _isBusy;
 
     private void Start()
     {
-        if (interactionPrompt != null)
-            interactionPrompt.SetActive(false);
+        SetPromptVisible(false);
 
-        if (mailboxAnimator != null)
+        if (mailboxAnimator == null)
+            return;
+
+        // Show the letter animation only
+        // if the letter has not been read.
+        if (GameState.HasReadLetter)
+        {
+            mailboxAnimator.Play("Mailbox_Closed", 0, 0f);
+        }
+        else
+        {
             mailboxAnimator.Play("Mailbox_Message", 0, 0f);
+        }
     }
 
     private void Update()
     {
-        if (_nearbyPlayer == null || _interactAction == null)
+        if (_nearbyPlayer == null ||
+            _interactAction == null ||
+            _isBusy)
+        {
+            return;
+        }
+
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null)
             return;
 
-        if (_isBusy)
-            return;
-
-        if (DialogueManager.Instance == null)
-            return;
-
-        if (DialogueManager.Instance.IsOpen)
+        if (dialogue.IsOpen)
         {
             SetPromptVisible(false);
             return;
@@ -56,10 +69,14 @@ public class MailboxInteraction : MonoBehaviour
         if (!_interactAction.WasPressedThisFrame())
             return;
 
-        if (_hasLetter)
-            StartCoroutine(CollectLetter());
-        else
+        if (GameState.HasReadLetter)
+        {
             StartCoroutine(ReadEmptyMailbox());
+        }
+        else
+        {
+            StartCoroutine(CollectLetter());
+        }
     }
 
     private IEnumerator CollectLetter()
@@ -67,26 +84,44 @@ public class MailboxInteraction : MonoBehaviour
         _isBusy = true;
         SetPromptVisible(false);
 
+        // Open the mailbox.
         if (mailboxAnimator != null)
         {
-            mailboxAnimator.Play("Mailbox_Opening", 0, 0f);
+            mailboxAnimator.Play(
+                "Mailbox_Opening", 0, 0f
+            );
 
             if (openingClip != null)
-                yield return new WaitForSeconds(openingClip.length);
+            {
+                yield return new WaitForSeconds(
+                    openingClip.length
+                );
+            }
         }
 
-        _hasLetter = false;
-
+        // Show the letter using DialogueManager.
         yield return ShowMailboxDialogue(_letterMessage);
 
+        // Remember that Phoebe read the letter.
+        GameState.ReadLetter();
+
+        // Close the mailbox.
         if (mailboxAnimator != null)
         {
-            mailboxAnimator.Play("Mailbox_Closing", 0, 0f);
+            mailboxAnimator.Play(
+                "Mailbox_Closing", 0, 0f
+            );
 
             if (closingClip != null)
-                yield return new WaitForSeconds(closingClip.length);
+            {
+                yield return new WaitForSeconds(
+                    closingClip.length
+                );
+            }
 
-            mailboxAnimator.Play("Mailbox_Closed", 0, 0f);
+            mailboxAnimator.Play(
+                "Mailbox_Closed", 0, 0f
+            );
         }
 
         _isBusy = false;
@@ -114,11 +149,13 @@ public class MailboxInteraction : MonoBehaviour
                 "MailboxInteraction: DialogueManager not found!",
                 this
             );
+
             yield break;
         }
 
         dialogue.ShowDialogue("Phoebe", message);
 
+        // Wait until Continue closes the dialogue.
         yield return new WaitUntil(
             () => dialogue == null || !dialogue.IsOpen
         );
@@ -133,7 +170,8 @@ public class MailboxInteraction : MonoBehaviour
             return;
 
         _nearbyPlayer = player;
-        _interactAction = player.actions.FindAction("Interact");
+        _interactAction =
+            player.actions.FindAction("Interact");
 
         RefreshPrompt();
     }

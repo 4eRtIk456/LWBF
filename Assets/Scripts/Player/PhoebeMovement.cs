@@ -9,13 +9,13 @@ using UnityEngine.Rendering.Universal;
 public class PhoebeMovement : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 6f;
+    [SerializeField] private float moveSpeed = 7f;
 
     [Header("Lantern")]
     [SerializeField] private AnimationClip takeOutClip;
     [SerializeField] private AnimationClip takeInClip;
     [SerializeField] private Light2D lanternLight;
-    [SerializeField] private float maxLightIntensity = 1.4f;
+    [SerializeField] private float maxLightIntensity = 0.8f;
     [SerializeField] private float lightFadeDuration = 0.5f;
 
     private Rigidbody2D rb;
@@ -45,7 +45,11 @@ public class PhoebeMovement : MonoBehaviour
 
         if (moveAction == null || lanternAction == null)
         {
-            Debug.LogError("Move or Lantern action is missing!", this);
+            Debug.LogError(
+                "Move or Lantern action is missing!",
+                this
+            );
+
             enabled = false;
             return;
         }
@@ -137,6 +141,10 @@ public class PhoebeMovement : MonoBehaviour
 
     private void ToggleLantern()
     {
+        // NEW: Phoebe cannot use a lantern she hasn't collected.
+        if (!GameState.HasLantern)
+            return;
+
         if (isLanternAnimating)
             return;
 
@@ -167,7 +175,10 @@ public class PhoebeMovement : MonoBehaviour
             duration
         );
 
-        float waitTime = Mathf.Max(0f, duration - fadeDuration);
+        float waitTime = Mathf.Max(
+            0f,
+            duration - fadeDuration
+        );
 
         if (waitTime > 0f)
             yield return new WaitForSeconds(waitTime);
@@ -204,10 +215,15 @@ public class PhoebeMovement : MonoBehaviour
             FadeLight(0f, fadeDuration)
         );
 
-        float remainingTime = Mathf.Max(0f, duration - fadeDuration);
+        float remainingTime = Mathf.Max(
+            0f,
+            duration - fadeDuration
+        );
 
         if (remainingTime > 0f)
-            yield return new WaitForSeconds(remainingTime);
+            yield return new WaitForSeconds(
+                remainingTime
+            );
 
         hasLantern = false;
         isLanternAnimating = false;
@@ -216,7 +232,9 @@ public class PhoebeMovement : MonoBehaviour
         UpdateAnimation();
     }
 
-    private IEnumerator FadeLight(float targetIntensity, float duration)
+    private IEnumerator FadeLight(
+        float targetIntensity,
+        float duration)
     {
         if (lanternLight == null)
         {

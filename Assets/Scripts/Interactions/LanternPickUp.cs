@@ -7,30 +7,22 @@ public class LanternPickup : MonoBehaviour
     [Header("Interaction")]
     [SerializeField] private GameObject _interactionPrompt;
 
-    public static bool HasLantern { get; private set; }
+    public static bool HasLantern => GameState.HasLantern;
 
     private PlayerInput _playerInput;
     private InputAction _interactAction;
 
-    [RuntimeInitializeOnLoadMethod(
-        RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetLanternState()
-    {
-        HasLantern = false;
-    }
-
     private void Start()
     {
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(false);
+        SetPromptVisible(false);
 
-        if (HasLantern)
+        if (GameState.HasLantern)
             gameObject.SetActive(false);
     }
 
     private void Update()
     {
-        if (HasLantern || _playerInput == null)
+        if (GameState.HasLantern || _playerInput == null)
             return;
 
         if (DialogueManager.Instance == null)
@@ -68,7 +60,7 @@ public class LanternPickup : MonoBehaviour
 
     private void PickUpLantern()
     {
-        HasLantern = true;
+        GameState.CollectLantern();
 
         Debug.Log("Phoebe picked up the lantern!");
 
@@ -88,7 +80,7 @@ public class LanternPickup : MonoBehaviour
 
     private void CheckPlayer(Collider2D other)
     {
-        if (HasLantern)
+        if (GameState.HasLantern)
             return;
 
         PlayerInput player =

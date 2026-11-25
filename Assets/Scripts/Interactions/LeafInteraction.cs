@@ -1,4 +1,4 @@
-
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,6 +6,9 @@ public class LeafInteraction : MonoBehaviour
 {
     [Header("Interaction")]
     [SerializeField] private GameObject _interactionPrompt;
+
+    [Header("Collectible")]
+    [SerializeField] private GameObject _leafObject;
 
     [Header("Dialogue")]
     [SerializeField] private string _speakerName = "Phoebe";
@@ -16,22 +19,30 @@ public class LeafInteraction : MonoBehaviour
 
     private PlayerInput _nearbyPlayer;
     private InputAction _interactAction;
+    private bool _isCollecting;
 
     private void Start()
     {
-        if (_interactionPrompt != null)
-            _interactionPrompt.SetActive(false);
+        SetPromptVisible(false);
+
+        // Hide the whole leaf if it was already collected.
+        if (GameState.HasFirstIngredient)
+            HideLeaf();
     }
 
     private void Update()
     {
-        if (_nearbyPlayer == null || _interactAction == null)
+        if (_isCollecting ||
+            _nearbyPlayer == null ||
+            _interactAction == null)
             return;
 
-        if (DialogueManager.Instance == null)
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null)
             return;
 
-        if (DialogueManager.Instance.IsOpen)
+        if (dialogue.IsOpen)
         {
             SetPromptVisible(false);
             return;
@@ -40,14 +51,37 @@ public class LeafInteraction : MonoBehaviour
         SetPromptVisible(true);
 
         if (_interactAction.WasPressedThisFrame())
-        {
-            SetPromptVisible(false);
+            StartCoroutine(CollectIngredient());
+    }
 
-            DialogueManager.Instance.ShowDialogue(
-                _speakerName,
-                _message
-            );
-        }
+    private IEnumerator CollectIngredient()
+    {
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null)
+            yield break;
+
+        _isCollecting = true;
+        SetPromptVisible(false);
+
+        dialogue.ShowDialogue(_speakerName, _message);
+
+        yield return new WaitUntil(
+            () => dialogue == null || !dialogue.IsOpen
+        );
+
+        GameState.CollectFirstIngredient();
+        Debug.Log("First ingredient collected!");
+
+        HideLeaf();
+    }
+
+    private void HideLeaf()
+    {
+        if (_leafObject != null)
+            _leafObject.SetActive(false);
+        else
+            gameObject.SetActive(false);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -62,7 +96,13 @@ public class LeafInteraction : MonoBehaviour
         _interactAction =
             player.actions.FindAction("Interact");
 
-        SetPromptVisible(true);
+        if (!_isCollecting &&
+            !GameState.HasFirstIngredient &&
+            DialogueManager.Instance != null &&
+            !DialogueManager.Instance.IsOpen)
+        {
+            SetPromptVisible(true);
+        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
