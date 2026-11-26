@@ -1,4 +1,3 @@
-
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,17 +6,25 @@ using UnityEngine.Rendering.Universal;
 [RequireComponent(typeof(BoxCollider2D))]
 public class BridgeLightTrigger : MonoBehaviour
 {
+    [Header("Ghost")]
+    [SerializeField] private IvyGhostAppearance _ivyGhost;
+    [SerializeField] private MonoBehaviour _playerMovementScript;
+    [SerializeField] private Rigidbody2D _playerRigidbody;
+    [SerializeField] private GameObject _questionMark;
+    [SerializeField] private float _freezeDuration = 2f;
+
     [Header("Lighting")]
     [SerializeField] private Light2D _lightToDim;
     [SerializeField] private Volume _moonVolume;
 
     [Header("Transition Settings")]
-    [SerializeField] private float _darkIntensity = 0.3f;
-    [SerializeField] private float _fadeDuration = 2f;
+    [SerializeField] private float _darkIntensity = 0.1f;
+    [SerializeField] private float _fadeDuration = 2.5f;
 
     private BoxCollider2D _triggerCollider;
     private float _normalIntensity;
     private bool _isDark;
+    private bool _ghostEventPlayed;
     private Coroutine _fadeCoroutine;
 
     private void Awake()
@@ -29,10 +36,14 @@ public class BridgeLightTrigger : MonoBehaviour
             _normalIntensity = _lightToDim.intensity;
         }
 
-        // Initially, moon effects are disabled
         if (_moonVolume != null)
         {
             _moonVolume.weight = 0f;
+        }
+
+        if (_questionMark != null)
+        {
+            _questionMark.SetActive(false);
         }
     }
 
@@ -42,11 +53,6 @@ public class BridgeLightTrigger : MonoBehaviour
     }
 
     private void OnTriggerStay2D(Collider2D other)
-    {
-        CheckPlayerSide(other);
-    }
-
-    private void OnTriggerExit2D(Collider2D other)
     {
         CheckPlayerSide(other);
     }
@@ -63,8 +69,13 @@ public class BridgeLightTrigger : MonoBehaviour
             return;
         }
 
-        float bridgeCenter = _triggerCollider.bounds.center.x;
-        bool shouldBeDark = playerBody.position.x > bridgeCenter;
+        bool shouldBeDark = playerBody.position.x > _triggerCollider.bounds.center.x;
+
+        if (shouldBeDark && !_ghostEventPlayed && _ivyGhost != null)
+        {
+            _ghostEventPlayed = true;
+            StartCoroutine(PlayGhostEvent());
+        }
 
         if (shouldBeDark == _isDark)
         {
@@ -78,20 +89,45 @@ public class BridgeLightTrigger : MonoBehaviour
             StopCoroutine(_fadeCoroutine);
         }
 
-        float targetLight = _isDark
-            ? _darkIntensity
-            : _normalIntensity;
-
+        float targetLight = _isDark ? _darkIntensity : _normalIntensity;
         float targetWeight = _isDark ? 1f : 0f;
 
-        _fadeCoroutine = StartCoroutine(
-            FadeEnvironment(targetLight, targetWeight)
-        );
+        _fadeCoroutine = StartCoroutine(FadeEnvironment(targetLight, targetWeight));
     }
 
-    private IEnumerator FadeEnvironment(
-        float targetLight,
-        float targetWeight)
+    private IEnumerator PlayGhostEvent()
+    {
+        if (_playerMovementScript != null)
+        {
+            _playerMovementScript.enabled = false;
+        }
+
+        if (_playerRigidbody != null)
+        {
+            _playerRigidbody.linearVelocity = Vector2.zero;
+        }
+
+        if (_questionMark != null)
+        {
+            _questionMark.SetActive(true);
+        }
+
+        _ivyGhost.Appear();
+
+        yield return new WaitForSeconds(_freezeDuration);
+
+        if (_questionMark != null)
+        {
+            _questionMark.SetActive(false);
+        }
+
+        if (_playerMovementScript != null)
+        {
+            _playerMovementScript.enabled = true;
+        }
+    }
+
+    private IEnumerator FadeEnvironment(float targetLight, float targetWeight)
     {
         float startLight = _lightToDim.intensity;
         float startWeight = _moonVolume.weight;
@@ -104,30 +140,16 @@ public class BridgeLightTrigger : MonoBehaviour
             elapsed += Time.deltaTime;
 
             float t = Mathf.Clamp01(elapsed / duration);
-
-            // Smooth transition
             t = t * t * (3f - 2f * t);
 
-            // Fade global lighting
-            _lightToDim.intensity = Mathf.Lerp(
-                startLight,
-                targetLight,
-                t
-            );
-
-            // Fade Bloom and other Volume effects
-            _moonVolume.weight = Mathf.Lerp(
-                startWeight,
-                targetWeight,
-                t
-            );
+            _lightToDim.intensity = Mathf.Lerp(startLight, targetLight, t);
+            _moonVolume.weight = Mathf.Lerp(startWeight, targetWeight, t);
 
             yield return null;
         }
 
         _lightToDim.intensity = targetLight;
         _moonVolume.weight = targetWeight;
-
         _fadeCoroutine = null;
     }
 }
