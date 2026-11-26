@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,6 +5,15 @@ public class LanternPickup : MonoBehaviour
 {
     [Header("Interaction")]
     [SerializeField] private GameObject _interactionPrompt;
+
+    [Header("Dialogue")]
+    [TextArea(2, 4)]
+    [SerializeField] private string _beforeLetterMessage =
+        "I don't need my lantern right now.";
+
+    [TextArea(2, 4)]
+    [SerializeField] private string _beforeRecipeMessage =
+        "I should check my recipe book first.";
 
     public static bool HasLantern => GameState.HasLantern;
 
@@ -25,10 +33,12 @@ public class LanternPickup : MonoBehaviour
         if (GameState.HasLantern || _playerInput == null)
             return;
 
-        if (DialogueManager.Instance == null)
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null)
             return;
 
-        if (DialogueManager.Instance.IsOpen)
+        if (dialogue.IsOpen)
         {
             SetPromptVisible(false);
             return;
@@ -39,19 +49,42 @@ public class LanternPickup : MonoBehaviour
         if (_interactAction != null &&
             _interactAction.WasPressedThisFrame())
         {
-            AskToPickUp();
+            InteractWithLantern();
         }
     }
 
-    private void AskToPickUp()
+    private void InteractWithLantern()
     {
-        if (DialogueManager.Instance == null ||
-            DialogueManager.Instance.IsOpen)
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null || dialogue.IsOpen)
             return;
 
         SetPromptVisible(false);
 
-        DialogueManager.Instance.ShowChoice(
+        if (!GameState.HasReadLetter)
+        {
+            dialogue.ShowDialogue(
+                "Phoebe",
+                _beforeLetterMessage,
+                PhoebeExpression.Neutral
+            );
+
+            return;
+        }
+
+        if (!GameState.HasCheckedRecipeBook)
+        {
+            dialogue.ShowDialogue(
+                "Phoebe",
+                _beforeRecipeMessage,
+                PhoebeExpression.Neutral
+            );
+
+            return;
+        }
+
+        dialogue.ShowChoice(
             "Phoebe",
             "Pick up the lantern?",
             PickUpLantern
@@ -60,9 +93,11 @@ public class LanternPickup : MonoBehaviour
 
     private void PickUpLantern()
     {
-        GameState.CollectLantern();
+        if (!GameState.HasCheckedRecipeBook ||
+            GameState.HasLantern)
+            return;
 
-        Debug.Log("Phoebe picked up the lantern!");
+        GameState.CollectLantern();
 
         SetPromptVisible(false);
         gameObject.SetActive(false);
@@ -93,11 +128,7 @@ public class LanternPickup : MonoBehaviour
         _interactAction =
             player.actions.FindAction("Interact");
 
-        if (DialogueManager.Instance != null &&
-            !DialogueManager.Instance.IsOpen)
-        {
-            SetPromptVisible(true);
-        }
+        RefreshPrompt();
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -112,6 +143,19 @@ public class LanternPickup : MonoBehaviour
         _interactAction = null;
 
         SetPromptVisible(false);
+    }
+
+    private void RefreshPrompt()
+    {
+        bool dialogueOpen =
+            DialogueManager.Instance != null &&
+            DialogueManager.Instance.IsOpen;
+
+        SetPromptVisible(
+            _playerInput != null &&
+            !GameState.HasLantern &&
+            !dialogueOpen
+        );
     }
 
     private void SetPromptVisible(bool visible)

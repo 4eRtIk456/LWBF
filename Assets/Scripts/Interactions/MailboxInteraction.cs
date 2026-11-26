@@ -193,7 +193,13 @@ public class MailboxInteraction : MonoBehaviour
             yield break;
         }
 
-        dialogue.ShowDialogue("Phoebe", message);
+        dialogue.ShowDialogue(
+            "Phoebe",
+            message,
+            message == _letterMessage
+                ? PhoebeExpression.Happy
+                : PhoebeExpression.Neutral
+        );
 
         // Wait until Continue closes the dialogue.
         yield return new WaitUntil(
