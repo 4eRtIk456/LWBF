@@ -1,4 +1,3 @@
-
 using System;
 using TMPro;
 using UnityEngine;
@@ -18,6 +17,10 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private GameObject _choicePanel;
     [SerializeField] private Button _yesButton;
     [SerializeField] private Button _noButton;
+
+    [Header("Phoebe Portrait")]
+    [SerializeField] private GameObject _phoebePortrait;
+    [SerializeField] private PhoebePortraitController _portraitController;
 
     [Header("Player")]
     [SerializeField] private PhoebeMovement _playerMovement;
@@ -48,9 +51,25 @@ public class DialogueManager : MonoBehaviour
         _noButton.onClick.AddListener(ChooseNo);
 
         _dialoguePanel.SetActive(false);
+
+        if (_phoebePortrait != null)
+            _phoebePortrait.SetActive(false);
     }
 
+  
     public void ShowDialogue(string speaker, string message)
+    {
+        ShowDialogue(
+            speaker,
+            message,
+            PhoebeExpression.Neutral
+        );
+    }
+
+    public void ShowDialogue(
+        string speaker,
+        string message,
+        PhoebeExpression expression)
     {
         OpenDialogue();
 
@@ -59,6 +78,8 @@ public class DialogueManager : MonoBehaviour
 
         _continueButton.gameObject.SetActive(true);
         _choicePanel.SetActive(false);
+
+        UpdatePortrait(speaker, expression);
     }
 
     public void ShowChoice(
@@ -66,6 +87,22 @@ public class DialogueManager : MonoBehaviour
         string question,
         Action onYes,
         Action onNo = null)
+    {
+        ShowChoice(
+            speaker,
+            question,
+            onYes,
+            onNo,
+            PhoebeExpression.Neutral
+        );
+    }
+
+    public void ShowChoice(
+        string speaker,
+        string question,
+        Action onYes,
+        Action onNo,
+        PhoebeExpression expression)
     {
         OpenDialogue();
 
@@ -77,6 +114,25 @@ public class DialogueManager : MonoBehaviour
 
         _continueButton.gameObject.SetActive(false);
         _choicePanel.SetActive(true);
+
+        UpdatePortrait(speaker, expression);
+    }
+
+    private void UpdatePortrait(
+        string speaker,
+        PhoebeExpression expression)
+    {
+        if (_phoebePortrait == null)
+            return;
+
+        bool showPhoebe = speaker == "Phoebe";
+
+        _phoebePortrait.SetActive(showPhoebe);
+
+        if (showPhoebe && _portraitController != null)
+        {
+            _portraitController.SetExpression(expression);
+        }
     }
 
     private void OpenDialogue()
@@ -101,7 +157,11 @@ public class DialogueManager : MonoBehaviour
             return;
 
         IsOpen = false;
+
         _dialoguePanel.SetActive(false);
+
+        if (_phoebePortrait != null)
+            _phoebePortrait.SetActive(false);
 
         _onYes = null;
         _onNo = null;

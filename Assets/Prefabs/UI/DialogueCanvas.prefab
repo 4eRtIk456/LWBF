@@ -169,6 +169,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 3287722926206297815}
   - {fileID: 7669823810918557905}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -259,6 +260,8 @@ MonoBehaviour:
   _choicePanel: {fileID: 6205102295566144991}
   _yesButton: {fileID: 6745542092210609808}
   _noButton: {fileID: 1892042696559059450}
+  _phoebePortrait: {fileID: 4242792519201015394}
+  _portraitController: {fileID: 333713961459425762}
   _playerMovement: {fileID: 0}
 --- !u!1 &1298238999655949655
 GameObject:
@@ -760,6 +763,111 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &4242792519201015394
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3287722926206297815}
+  - component: {fileID: 2401907815962088048}
+  - component: {fileID: 7393891545137330869}
+  - component: {fileID: 333713961459425762}
+  m_Layer: 5
+  m_Name: PhoebePortrait
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &3287722926206297815
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4242792519201015394}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4982714130518550920}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 290, y: 550}
+  m_SizeDelta: {x: 900, y: 900}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2401907815962088048
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4242792519201015394}
+  m_CullTransparentMesh: 1
+--- !u!114 &7393891545137330869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4242792519201015394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 6869df9da3ef940e7abdc0d11f5d1add, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &333713961459425762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4242792519201015394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0c410c50507e4a86800b71629405fdc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PhoebePortraitController
+  _portraitImage: {fileID: 7393891545137330869}
+  _neutral: {fileID: 21300000, guid: 6869df9da3ef940e7abdc0d11f5d1add, type: 3}
+  _neutralClosed: {fileID: 21300000, guid: 094e50e243966426fbd6c890ce2c19ab, type: 3}
+  _serious: {fileID: 21300000, guid: 0a0947de07f414652b8a65c94f151402, type: 3}
+  _seriousClosed: {fileID: 21300000, guid: 86e1a199ce1ed4c17b8e5e935a6a59ab, type: 3}
+  _worried: {fileID: 21300000, guid: 165803e96ee8642188242992ccffc2b4, type: 3}
+  _worriedClosed: {fileID: 21300000, guid: 24dca8a9889d84ed0964a16f7ee8c02e, type: 3}
+  _happy: {fileID: 21300000, guid: 4521fe9e4d45347ec8e8ebb763485b14, type: 3}
+  _happyClosed: {fileID: 21300000, guid: f4f83aecd395f4e289bf73af93ee09b7, type: 3}
+  _angry: {fileID: 21300000, guid: 034212b4cf11c41f38ff3de1b09ac15d, type: 3}
+  _angryClosed: {fileID: 21300000, guid: 737e052e4bb324c6b901cff5b2c623c2, type: 3}
+  _shocked: {fileID: 21300000, guid: 11ced1762a0934f2782dc697c1b6fc6e, type: 3}
+  _shockedClosed: {fileID: 21300000, guid: a28f9acae904f48fda725cb44389e4b1, type: 3}
+  _yawn: {fileID: 21300000, guid: 45e799cdd82884f38a87c539ec7fe586, type: 3}
+  _minimumBlinkInterval: 1
+  _maximumBlinkInterval: 3
+  _blinkDuration: 0.2
 --- !u!1 &5458593563679238905
 GameObject:
   m_ObjectHideFlags: 0

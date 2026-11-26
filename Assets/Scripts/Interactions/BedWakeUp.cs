@@ -1,4 +1,3 @@
-
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -25,8 +24,22 @@ public class BedWakeUp : MonoBehaviour
     [SerializeField] private GameObject _interactionPrompt;
 
     [Header("Timing")]
-    [SerializeField] private float _sleepDuration = 3f;
+    [SerializeField] private float _sleepDuration = 6f;
     [SerializeField] private float _eyesOpenDuration = 1f;
+
+    [Header("Wake Up Dialogue")]
+    [TextArea(2, 4)]
+    [SerializeField] private string _yawnMessage =
+        "Yaaawn... Five more minutes...";
+
+    [TextArea(2, 4)]
+    [SerializeField] private string _morningMessage =
+        "Another day, another potion to make.";
+
+    [TextArea(2, 4)]
+    [SerializeField] private string _mailboxMessage =
+        "I wonder if there are any new orders. " +
+        "I should check the mailbox.";
 
     private PhoebeMovement _movement;
     private PlayerInput _playerInput;
@@ -56,17 +69,10 @@ public class BedWakeUp : MonoBehaviour
             return;
         }
 
-        _movement =
-            _player.GetComponent<PhoebeMovement>();
-
-        _playerInput =
-            _player.GetComponent<PlayerInput>();
-
-        _playerRenderer =
-            _player.GetComponent<SpriteRenderer>();
-
-        _playerRigidbody =
-            _player.GetComponent<Rigidbody2D>();
+        _movement = _player.GetComponent<PhoebeMovement>();
+        _playerInput = _player.GetComponent<PlayerInput>();
+        _playerRenderer = _player.GetComponent<SpriteRenderer>();
+        _playerRigidbody = _player.GetComponent<Rigidbody2D>();
 
         if (_playerInput != null)
         {
@@ -80,15 +86,21 @@ public class BedWakeUp : MonoBehaviour
             SceneEntryState.ConsumeEnteringHouse();
 
         if (_returnedFromOutside)
+        {
             EnterFromOutside();
+        }
         else
+        {
             BeginSleeping();
+        }
     }
 
     private void Start()
     {
         if (!_returnedFromOutside)
+        {
             StartCoroutine(SleepSequence());
+        }
     }
 
     private void Update()
@@ -96,10 +108,12 @@ public class BedWakeUp : MonoBehaviour
         if (_isSleeping || !_playerNearby)
             return;
 
-        if (DialogueManager.Instance == null)
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null)
             return;
 
-        if (DialogueManager.Instance.IsOpen)
+        if (dialogue.IsOpen)
         {
             SetPromptVisible(false);
             return;
@@ -116,13 +130,14 @@ public class BedWakeUp : MonoBehaviour
 
     private void AskToSleep()
     {
-        if (DialogueManager.Instance == null ||
-            DialogueManager.Instance.IsOpen)
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null || dialogue.IsOpen)
             return;
 
         SetPromptVisible(false);
 
-        DialogueManager.Instance.ShowChoice(
+        dialogue.ShowChoice(
             "Phoebe",
             "Go back to sleep?",
             StartSleeping
@@ -195,6 +210,7 @@ public class BedWakeUp : MonoBehaviour
                 "BedWakeUp: Entrance Spawn Point is missing!",
                 this
             );
+
             return;
         }
 
@@ -253,9 +269,7 @@ public class BedWakeUp : MonoBehaviour
         if (_cameraFollow != null &&
             _sleepingCameraPoint != null)
         {
-            _cameraFollow.SetTarget(
-                _sleepingCameraPoint
-            );
+            _cameraFollow.SetTarget(_sleepingCameraPoint);
         }
     }
 
@@ -263,22 +277,16 @@ public class BedWakeUp : MonoBehaviour
     {
         BeginSleeping();
 
-        // Sleeping animation.
         yield return new WaitForSeconds(_sleepDuration);
 
-        // Phoebe opens her eyes.
         if (_zzz != null)
             _zzz.SetActive(false);
 
         _sleepingRenderer.sprite = _eyesOpenSprite;
 
-        yield return new WaitForSeconds(
-            _eyesOpenDuration
-        );
+        yield return new WaitForSeconds(_eyesOpenDuration);
 
-        // Move Phoebe beside the bed.
-        _player.transform.position =
-            _wakePoint.position;
+        _player.transform.position = _wakePoint.position;
 
         Physics2D.SyncTransforms();
 
@@ -293,16 +301,62 @@ public class BedWakeUp : MonoBehaviour
         if (_playerRenderer != null)
             _playerRenderer.enabled = true;
 
+        if (_cameraFollow != null)
+            _cameraFollow.SetTarget(_player.transform);
+
+        if (!GameState.HasFinishedMorningIntro)
+        {
+            yield return PlayMorningDialogue();
+
+            GameState.CompleteMorningIntro();
+        }
+
         if (_movement != null)
             _movement.enabled = true;
 
         if (_playerInput != null)
             _playerInput.ActivateInput();
 
-        if (_cameraFollow != null)
-            _cameraFollow.SetTarget(_player.transform);
-
         _isSleeping = false;
+    }
+
+    private IEnumerator PlayMorningDialogue()
+    {
+        DialogueManager dialogue = DialogueManager.Instance;
+
+        if (dialogue == null)
+        {
+            Debug.LogWarning(
+                "BedWakeUp: DialogueManager not found!",
+                this
+            );
+
+            yield break;
+        }
+
+        dialogue.ShowDialogue(
+            "Phoebe",
+            _yawnMessage,
+            PhoebeExpression.Yawn
+        );
+
+        yield return new WaitUntil(() => !dialogue.IsOpen);
+
+        dialogue.ShowDialogue(
+            "Phoebe",
+            _morningMessage,
+            PhoebeExpression.Neutral
+        );
+
+        yield return new WaitUntil(() => !dialogue.IsOpen);
+
+        dialogue.ShowDialogue(
+            "Phoebe",
+            _mailboxMessage,
+            PhoebeExpression.Neutral
+        );
+
+        yield return new WaitUntil(() => !dialogue.IsOpen);
     }
 
     private void SetPromptVisible(bool visible)
