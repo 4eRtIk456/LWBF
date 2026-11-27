@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 
@@ -14,11 +15,14 @@ public class IvyGhostAppearance : MonoBehaviour
     private Animator _animator;
     private bool _hasAppeared;
     private bool _isVisible;
+    private bool _soundStarted;
+    private bool _forestMusicPaused;
 
     public float TransformationDuration =>
-    _transformationClip != null
-        ? _transformationClip.length
-        : 0f;
+        _transformationClip != null
+            ? _transformationClip.length
+            : 0f;
+
     private void Awake()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();
@@ -42,6 +46,8 @@ public class IvyGhostAppearance : MonoBehaviour
 
         _animator.Play(_idleStateName, 0, 0f);
         _animator.Update(0f);
+
+        StartGhostAudio();
     }
 
     public void Appear()
@@ -60,7 +66,27 @@ public class IvyGhostAppearance : MonoBehaviour
         _animator.Play(_animationStateName, 0, 0f);
         _animator.Update(0f);
 
+        StartGhostAudio();
+
         StartCoroutine(HideAfterAnimation());
+    }
+
+    private void StartGhostAudio()
+    {
+        if (_soundStarted)
+        {
+            return;
+        }
+
+        _soundStarted = true;
+
+        if (ForestMusic.Instance != null)
+        {
+            ForestMusic.Instance.PauseForGhost();
+            _forestMusicPaused = true;
+        }
+
+        SfxManager.Instance?.PlayIvyGhost();
     }
 
     private IEnumerator HideAfterAnimation()
@@ -70,5 +96,28 @@ public class IvyGhostAppearance : MonoBehaviour
         _animator.enabled = false;
         _spriteRenderer.enabled = false;
         _isVisible = false;
+
+        RestoreForestMusic();
+    }
+
+    private void RestoreForestMusic()
+    {
+        if (!_forestMusicPaused)
+        {
+            return;
+        }
+
+        ForestMusic.Instance?.ResumeAfterGhost();
+        _forestMusicPaused = false;
+    }
+
+    private void OnDisable()
+    {
+        RestoreForestMusic();
+    }
+
+    private void OnDestroy()
+    {
+        RestoreForestMusic();
     }
 }

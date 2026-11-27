@@ -81,8 +81,8 @@ public class MailboxInteraction : MonoBehaviour
     {
         _isBusy = true;
         SetPromptVisible(false);
+        SfxManager.Instance?.PlayMailboxOpen();
 
-        // Open the mailbox.
         if (mailboxAnimator != null)
         {
             mailboxAnimator.Play(
@@ -97,10 +97,8 @@ public class MailboxInteraction : MonoBehaviour
             }
         }
 
-        // Phoebe speaks before the letter appears.
         yield return ShowMailboxDialogue(_letterMessage);
 
-        // Open the illustrated letter after Continue.
         if (_letterUI != null)
         {
             PhoebeMovement movement = null;
@@ -142,12 +140,11 @@ public class MailboxInteraction : MonoBehaviour
             );
         }
 
-        // Remember that the letter was read.
         GameState.ReadLetter();
 
-        // Close the mailbox.
         if (mailboxAnimator != null)
         {
+            SfxManager.Instance?.PlayMailboxClose();
             mailboxAnimator.Play(
                 "Mailbox_Closing", 0, 0f
             );
@@ -201,7 +198,6 @@ public class MailboxInteraction : MonoBehaviour
                 : PhoebeExpression.Neutral
         );
 
-        // Wait until Continue closes the dialogue.
         yield return new WaitUntil(
             () => dialogue == null || !dialogue.IsOpen
         );

@@ -25,7 +25,6 @@ public class LeafInteraction : MonoBehaviour
     {
         SetPromptVisible(false);
 
-        // Hide the whole leaf if it was already collected.
         if (GameState.HasFirstIngredient)
             HideLeaf();
     }

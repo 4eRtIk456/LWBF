@@ -101,6 +101,7 @@ public class HouseDoor : MonoBehaviour
     private IEnumerator OpenDoorAndEnter()
     {
         isAnimating = true;
+        SfxManager.Instance?.PlayDoorEnter();
 
         if (interactionPrompt != null)
             interactionPrompt.SetActive(false);
@@ -119,10 +120,8 @@ public class HouseDoor : MonoBehaviour
             doorAnimator.Play("Door_Opened", 0, 0f);
         }
 
-        // Tell the interior scene where Phoebe came from.
         SceneEntryState.SetEnteringHouse();
 
-        // Load Phoebe's house interior.
         SceneManager.LoadScene(_destinationScene);
     }
 

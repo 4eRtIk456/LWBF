@@ -95,6 +95,7 @@ public class InteriorExit : MonoBehaviour
 
     private void LeaveHouse()
     {
+        SfxManager.Instance?.PlayDoorExit();
         SceneManager.LoadScene(_destinationScene);
     }
 }

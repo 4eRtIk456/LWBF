@@ -52,7 +52,6 @@ public class Settings : MonoBehaviour
 
         UpdateFullscreenButtons();
 
-        // Restore saved display settings in the built game
 #if !UNITY_EDITOR
         if (PlayerPrefs.HasKey("ResolutionWidth"))
             ApplyResolution();
@@ -92,7 +91,6 @@ public class Settings : MonoBehaviour
                 resolution.width, resolution.height
             );
 
-            // Avoid duplicate resolutions with different refresh rates
             if (!resolutions.Contains(size))
             {
                 resolutions.Add(size);
@@ -174,18 +172,15 @@ public class Settings : MonoBehaviour
     
     private void UpdateFullscreenButtons()
     {
-        // Change button backgrounds
         fullscreenOnButton.image.color =
             isFullscreen ? selectedColor : normalColor;
 
         fullscreenOffButton.image.color =
             isFullscreen ? normalColor : selectedColor;
 
-        // Get TextMeshPro components
         TMP_Text onText = fullscreenOnButton.GetComponentInChildren<TMP_Text>();
         TMP_Text offText = fullscreenOffButton.GetComponentInChildren<TMP_Text>();
 
-        // Change text colors
         onText.color = isFullscreen ? selectedTextColor : normalTextColor;
         offText.color = isFullscreen ? normalTextColor : selectedTextColor;
     }

@@ -18,7 +18,6 @@ public class OptionsPopup : MonoBehaviour
     {
         panelGroup = _optionsPanel.GetComponent<CanvasGroup>();
 
-        // Initial state: panel is hidden
         _optionsPanel.localScale = Vector3.one * 0.65f;
         panelGroup.alpha = 0f;
         panelGroup.interactable = false;
@@ -73,12 +72,10 @@ public class OptionsPopup : MonoBehaviour
 
             float t = Mathf.Clamp01(elapsed / animationTime);
 
-            // Smooth pop-up effect
             float smooth = 1f - Mathf.Pow(1f - t, 3f);
 
             float scale = Mathf.Lerp(startScale, endScale, smooth);
 
-            // Small bounce when opening
             if (opening)
                 scale += Mathf.Sin(t * Mathf.PI) * 0.04f;
 

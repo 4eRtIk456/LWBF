@@ -141,7 +141,6 @@ public class PhoebeMovement : MonoBehaviour
 
     private void ToggleLantern()
     {
-        // NEW: Phoebe cannot use a lantern she hasn't collected.
         if (!GameState.HasLantern)
             return;
 

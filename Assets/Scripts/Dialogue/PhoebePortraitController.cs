@@ -113,7 +113,6 @@ public class PhoebePortraitController : MonoBehaviour
 
             yield return new WaitForSecondsRealtime(delay);
 
-            // Yawning uses a single sprite.
             if (_currentExpression == PhoebeExpression.Yawn)
                 continue;
 
