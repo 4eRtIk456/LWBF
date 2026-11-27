@@ -4514,6 +4514,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 838636020}
+  - component: {fileID: 838636021}
   m_Layer: 0
   m_Name: RecipeBook
   m_TagString: Untagged
@@ -4529,15 +4530,28 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 838636019}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.39, y: 3.89, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.4699993, y: -0.00999999, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1494029112}
   - {fileID: 1614022449}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1978970535}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!210 &838636021
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 838636019}
+  m_Enabled: 1
+  m_SortingLayerID: -1862049797
+  m_SortingLayer: 2
+  m_SortingOrder: 1
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &840942658
 GameObject:
   m_ObjectHideFlags: 0
@@ -7930,9 +7944,9 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -1862049797
-  m_SortingLayer: 2
-  m_SortingOrder: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -8372,6 +8386,10 @@ PrefabInstance:
     - target: {fileID: 3581951496628468776, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
       propertyPath: m_Name
       value: Phoebe
+      objectReference: {fileID: 0}
+    - target: {fileID: 7319873022396330398, guid: ddb03deee15214104be9bf95f2ab0055, type: 3}
+      propertyPath: moveSpeed
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9379,6 +9397,7 @@ Transform:
   m_Children:
   - {fileID: 1346985756}
   - {fileID: 197002272}
+  - {fileID: 838636020}
   m_Father: {fileID: 140287571}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!70 &1978970536
@@ -11619,5 +11638,4 @@ SceneRoots:
   - {fileID: 1682840987}
   - {fileID: 61733840}
   - {fileID: 8426274453526365889}
-  - {fileID: 838636020}
   - {fileID: 1430787400}

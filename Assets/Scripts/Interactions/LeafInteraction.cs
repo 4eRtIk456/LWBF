@@ -64,8 +64,11 @@ public class LeafInteraction : MonoBehaviour
         _isCollecting = true;
         SetPromptVisible(false);
 
-        dialogue.ShowDialogue(_speakerName, _message);
-
+        dialogue.ShowDialogue(
+            "Phoebe",
+            "A Lunar Leaf! That was quite easy.",
+            PhoebeExpression.Happy
+        );
         yield return new WaitUntil(
             () => dialogue == null || !dialogue.IsOpen
         );

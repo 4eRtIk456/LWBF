@@ -1,26 +1,44 @@
 using System.Collections;
+using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class QuestUI : MonoBehaviour
 {
-    [Header("UI")]
-    [SerializeField] private RectTransform _questBackground;
-    [SerializeField] private TMP_Text _questText;
+    [Header("Notification")]
+    [SerializeField] private RectTransform _questNotification;
+    [SerializeField] private float _slideDuration = 0.6f;
+    [SerializeField] private float _offscreenPadding = 50f;
 
-    [Header("Slide Animation")]
-    [SerializeField] private float _slideDuration = 0.65f;
-    [SerializeField] private float _offscreenPadding = 40f;
+    [Header("Journal")]
+    [SerializeField] private GameObject _journalPanel;
+    [SerializeField] private TMP_Text _journalText;
 
-    private Vector2 _visiblePosition;
+    private static QuestStage? _acknowledgedQuestStage;
+
+    private Vector2 _notificationPosition;
     private Coroutine _slideCoroutine;
+    private QuestStage _lastQuestStage = QuestStage.Intro;
+    private PhoebeMovement _playerMovement;
+    private bool _wasMovementEnabled;
+    private bool _journalOpen;
+
+    [RuntimeInitializeOnLoadMethod(
+        RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetNotificationState()
+    {
+        _acknowledgedQuestStage = null;
+    }
 
     private void Awake()
     {
-        if (_questBackground == null || _questText == null)
+        if (_questNotification == null ||
+            _journalPanel == null ||
+            _journalText == null)
         {
             Debug.LogError(
-                "QuestUI: Missing UI references!",
+                "QuestUI: Missing references!",
                 this
             );
 
@@ -28,65 +46,126 @@ public class QuestUI : MonoBehaviour
             return;
         }
 
-        _visiblePosition = _questBackground.anchoredPosition;
-        _questBackground.gameObject.SetActive(false);
+        _notificationPosition =
+            _questNotification.anchoredPosition;
+
+        _questNotification.gameObject.SetActive(false);
+        _journalPanel.SetActive(false);
     }
 
     private void OnEnable()
     {
-        GameState.OnStateChanged += UpdateQuest;
-        UpdateQuest();
+        GameState.OnStateChanged += RefreshQuest;
+        RefreshQuest();
     }
 
     private void OnDisable()
     {
-        GameState.OnStateChanged -= UpdateQuest;
+        GameState.OnStateChanged -= RefreshQuest;
 
         if (_slideCoroutine != null)
         {
             StopCoroutine(_slideCoroutine);
             _slideCoroutine = null;
         }
+
+        RestorePlayerMovement();
     }
 
-    private void UpdateQuest()
+    private void Update()
     {
-        if (_questBackground == null || _questText == null)
+        if (Keyboard.current == null)
             return;
 
-        string description = GameState.GetQuestDescription();
+        bool qPressed = Keyboard.current.qKey.wasPressedThisFrame;
+        bool escapePressed =
+            Keyboard.current.escapeKey.wasPressedThisFrame;
 
+        if (_journalOpen && (qPressed || escapePressed))
+        {
+            CloseJournal();
+            return;
+        }
+
+        if (!qPressed || _journalOpen)
+            return;
+
+        if (!GameState.HasFinishedMorningIntro)
+            return;
+
+        if (DialogueManager.Instance != null &&
+            DialogueManager.Instance.IsOpen)
+            return;
+
+        OpenJournal();
+    }
+
+    private void RefreshQuest()
+    {
+        if (_journalText == null)
+            return;
+
+        UpdateJournalText();
+
+        QuestStage currentStage = GameState.CurrentQuest;
+
+        if (currentStage == QuestStage.Intro)
+        {
+            HideNotification();
+            _lastQuestStage = currentStage;
+            return;
+        }
+
+        if (currentStage == _lastQuestStage)
+            return;
+
+        _lastQuestStage = currentStage;
+
+        if (_acknowledgedQuestStage == currentStage)
+        {
+            HideNotification();
+            return;
+        }
+
+        ShowNotification();
+    }
+
+    private void ShowNotification()
+    {
         if (_slideCoroutine != null)
         {
             StopCoroutine(_slideCoroutine);
             _slideCoroutine = null;
         }
 
-        if (string.IsNullOrEmpty(description))
-        {
-            _questBackground.gameObject.SetActive(false);
-            return;
-        }
-
-        _questText.text = "New Quest:\n" + description;
-        _questBackground.gameObject.SetActive(true);
-
-        _slideCoroutine = StartCoroutine(SlideIn());
+        _questNotification.gameObject.SetActive(true);
+        _slideCoroutine = StartCoroutine(SlideNotification());
     }
 
-    private IEnumerator SlideIn()
+    private void HideNotification()
+    {
+        if (_slideCoroutine != null)
+        {
+            StopCoroutine(_slideCoroutine);
+            _slideCoroutine = null;
+        }
+
+        _questNotification.gameObject.SetActive(false);
+    }
+
+    private IEnumerator SlideNotification()
     {
         float offscreenX =
-            _questBackground.rect.width *
-            (1f - _questBackground.pivot.x) +
+            _questNotification.rect.width *
+            _questNotification.pivot.x +
             _offscreenPadding;
 
         Vector2 startPosition = new Vector2(
             offscreenX,
-            _visiblePosition.y
+            _notificationPosition.y
         );
 
-        _questBackground.anchoredPosition = startPosition;
+        _questNotification.anchoredPosition = startPosition;
 
         float elapsed = 0f;
 
@@ -95,24 +174,157 @@ public class QuestUI : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
 
             float t = Mathf.Clamp01(
-                elapsed / _slideDuration
+                elapsed / Mathf.Max(_slideDuration, 0.01f)
             );
 
             t = t * t * (3f - 2f * t);
 
-            _questBackground.anchoredPosition =
+            _questNotification.anchoredPosition =
                 Vector2.Lerp(
                     startPosition,
-                    _visiblePosition,
+                    _notificationPosition,
                     t
                 );
 
             yield return null;
         }
 
-        _questBackground.anchoredPosition =
-            _visiblePosition;
+        _questNotification.anchoredPosition =
+            _notificationPosition;
 
         _slideCoroutine = null;
+    }
+
+    private void OpenJournal()
+    {
+        if (_journalOpen)
+            return;
+
+        _acknowledgedQuestStage = GameState.CurrentQuest;
+        HideNotification();
+
+        UpdateJournalText();
+
+        _playerMovement =
+            FindFirstObjectByType<PhoebeMovement>();
+
+        if (_playerMovement != null)
+        {
+            _wasMovementEnabled = _playerMovement.enabled;
+            _playerMovement.enabled = false;
+        }
+
+        _journalPanel.SetActive(true);
+        _journalOpen = true;
+    }
+
+    private void CloseJournal()
+    {
+        if (!_journalOpen)
+            return;
+
+        _journalOpen = false;
+        _journalPanel.SetActive(false);
+
+        RestorePlayerMovement();
+    }
+
+    private void RestorePlayerMovement()
+    {
+        if (_playerMovement != null)
+        {
+            _playerMovement.enabled = _wasMovementEnabled;
+            _playerMovement = null;
+        }
+    }
+
+    private void UpdateJournalText()
+    {
+        StringBuilder text = new StringBuilder();
+
+        if (GameState.HasFinishedMorningIntro)
+        {
+            AddQuest(
+                text,
+                "Check the mailbox",
+                GameState.HasReadLetter
+            );
+        }
+
+        if (GameState.HasReadLetter)
+        {
+            AddQuest(
+                text,
+                "Check the recipe book",
+                GameState.HasCheckedRecipeBook
+            );
+        }
+
+        if (GameState.HasCheckedRecipeBook)
+        {
+            AddQuest(
+                text,
+                "Pick up the lantern",
+                GameState.HasLantern
+            );
+        }
+
+        if (GameState.HasLantern)
+        {
+            text.AppendLine();
+            text.AppendLine("Ingredients:");
+
+            AddQuest(
+                text,
+                "First ingredient",
+                GameState.HasFirstIngredient
+            );
+
+            AddQuest(
+                text,
+                "Second ingredient",
+                GameState.HasSecondIngredient
+            );
+
+            AddQuest(
+                text,
+                "Third ingredient",
+                GameState.HasThirdIngredient
+            );
+        }
+
+        if (GameState.IngredientCount == 3)
+        {
+            text.AppendLine();
+
+            AddQuest(
+                text,
+                "Brew the potion",
+                false
+            );
+        }
+
+        _journalText.text = text.ToString();
+    }
+
+    private void AddQuest(
+        StringBuilder text,
+        string description,
+        bool completed)
+    {
+        if (completed)
+        {
+            text.AppendLine(
+                "<color=#967F70>[x] <s>" +
+                description +
+                "</s></color>"
+            );
+        }
+        else
+        {
+            text.AppendLine(
+                "[ ] " + description
+            );
+        }
     }
 }
